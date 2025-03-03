@@ -148,27 +148,37 @@ public class SimpleMultiLayerNetwork {
         return configuration;
     }
 
-    public void createAndTrain(MultiLayerConfiguration configuration, DataSet[] dataSets, int classes) {
+    public MultiLayerNetwork createAndTrain(MultiLayerConfiguration configuration, DataSet[] dataSets, int classes, int epochs) {
         MultiLayerNetwork model = new MultiLayerNetwork(configuration);
         model.init();
 
         DataSet trainData = dataSets[0];
         DataSet testData = dataSets[1];
 
-        int epochs = 500; // Количество эпох (настраиваемый параметр)
-
+        // Количество эпох (настраиваемый параметр)
+        Evaluation eval = null;
         for (int i = 0; i < epochs; i++) {
             trainData.shuffle(); // Перемешивание данных перед каждой эпохой
             model.fit(trainData);
 
             // Оценка точности после каждой эпохи
             INDArray output = model.output(testData.getFeatures());
-            Evaluation eval = new Evaluation(classes);
+            eval = new Evaluation(classes);
             eval.eval(testData.getLabels(), output);
 
             System.out.println("Эпоха " + (i + 1) + ":");
-            System.out.println(eval.stats());
+            System.out.println(eval.accuracy());
+            if (Double.compare(eval.accuracy(), 0.98) > 0) {
+                break;
+            }
+
         }
+        if (eval != null) {
+            System.out.println(eval.stats());
+        } else {
+            System.out.println("Training process fault");
+        }
+        return model;
     }
 
     public void saveModel(MultiLayerNetwork model, String filePath) {
